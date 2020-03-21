@@ -31,6 +31,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category="Aiming")
 	bool bIsLookInversion;
 
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Aiming")
+	bool bUseFirstPersonView;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
+	FName FpsCameraSocketName;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UCameraComponent* FpsCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UCameraComponent* TpsCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USpringArmComponent* SprintArmComponent;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

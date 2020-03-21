@@ -2,13 +2,31 @@
 
 
 #include "JC_Character.h"
+
+#include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AJC_Character::AJC_Character()
 {
+	FpsCameraSocketName = "SCK_Camera";
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	bUseFirstPersonView = true;
+	
+	FpsCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FPS_CameraComponent"));
+	FpsCameraComponent->bUsePawnControlRotation = true;
+	FpsCameraComponent->SetupAttachment(GetMesh(), FpsCameraSocketName);
+
+	SprintArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArmComponent"));
+	SprintArmComponent->bUsePawnControlRotation = true;
+	SprintArmComponent->SetupAttachment(RootComponent);
+
+	TpsCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TPS_CameraComponent"));
+	TpsCameraComponent->SetupAttachment(SprintArmComponent);
 
 }
 
