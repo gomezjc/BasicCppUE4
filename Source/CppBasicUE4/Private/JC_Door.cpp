@@ -4,6 +4,8 @@
 #include "Public/JC_Door.h"
 #include "Components/StaticMeshComponent.h"
 #include "TimerManager.h"
+#include "Components/BoxComponent.h"
+#include "JC_Character.h"
 
 // Sets default values
 AJC_Door::AJC_Door()
@@ -24,27 +26,20 @@ AJC_Door::AJC_Door()
 	InterpFunction.BindUFunction(this, FName("TimelineFloatReturn"));
 	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
 	OpenAngle = -90.0f;
+	DoorTag = "KeyA";
 	
-	
+	KeyZoneCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("KeyZoneCollider"));
+	KeyZoneCollider->SetupAttachment(RootComponent);
+	KeyZoneCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	KeyZoneCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
+	KeyZoneCollider->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
 }
 
 // Called when the game starts or when spawned
 void AJC_Door::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if(fCurve)
-	{
-		MyTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
-		MyTimeline->SetTimelineFinishedFunc(TimelineFinished);
-	}
-
-	StartAngle = doorComponent->GetRelativeTransform().Rotator();
-	EndAngle = FRotator(StartAngle.Pitch, OpenAngle, StartAngle.Roll);
-
-	MyTimeline->SetLooping(false);
-	MyTimeline->SetIgnoreTimeDilation(true);
-	MyTimeline->Play();
+	KeyZoneCollider->OnComponentBeginOverlap.AddDynamic(this, &AJC_Door::CheckKeyFromPlayer);
 }
 
 // Called every frame
@@ -74,4 +69,31 @@ void AJC_Door::OnTimelineFinished()
 void AJC_Door::ReverseTimeLine()
 {
 	MyTimeline->Reverse();
+}
+
+void AJC_Door::CheckKeyFromPlayer(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(IsValid(OtherActor))
+	{
+		AJC_Character* OverlapCharacter = Cast<AJC_Character>(OtherActor);
+
+		if(IsValid(OverlapCharacter))
+		{
+			if(OverlapCharacter->HasKey(DoorTag))
+			{
+				if (fCurve)
+				{
+					MyTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
+					MyTimeline->SetTimelineFinishedFunc(TimelineFinished);
+				}
+
+				StartAngle = doorComponent->GetRelativeTransform().Rotator();
+				EndAngle = FRotator(StartAngle.Pitch, OpenAngle, StartAngle.Roll);
+
+				MyTimeline->SetLooping(false);
+				MyTimeline->SetIgnoreTimeDilation(true);
+				MyTimeline->Play();
+			}
+		}
+	}
 }

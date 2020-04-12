@@ -34,6 +34,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Aiming")
 	bool bUseFirstPersonView;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Key")
+	TArray<FName> DoorKeys;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
 	FName FpsCameraSocketName;
 	
@@ -54,4 +57,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void AddKey(FName NewKey);
+
+	bool HasKey(FName KeyTag);
 };

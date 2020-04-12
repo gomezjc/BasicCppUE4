@@ -86,3 +86,13 @@ void AJC_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 }
 
+void AJC_Character::AddKey(FName NewKey)
+{
+	DoorKeys.Add(NewKey);
+}
+
+bool AJC_Character::HasKey(FName KeyTag)
+{
+	return DoorKeys.Contains(KeyTag);
+}
+
