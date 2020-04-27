@@ -7,6 +7,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Weapons/JC_Weapon.h"
 
 // Sets default values
 AJC_Character::AJC_Character()
@@ -30,11 +31,40 @@ AJC_Character::AJC_Character()
 
 }
 
+FVector AJC_Character::GetPawnViewLocation() const
+{
+	
+	if(IsValid(FpsCameraComponent) && bUseFirstPersonView)
+	{
+		return FpsCameraComponent->GetComponentLocation();
+	}else if (IsValid(TpsCameraComponent) && !bUseFirstPersonView)
+	{
+		return TpsCameraComponent->GetComponentLocation();
+	}
+
+	return Super::GetPawnViewLocation();
+}
+
 // Called when the game starts or when spawned
 void AJC_Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	CreateInitialWeapon();
+}
+
+
+
+void AJC_Character::CreateInitialWeapon()
+{
+	if (IsValid(InitialWeaponClass))
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AJC_Weapon>(InitialWeaponClass, GetActorLocation(), GetActorRotation());
+		if (IsValid(CurrentWeapon))
+		{
+			CurrentWeapon->SetCharacterOwner(this);
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		}
+	}
 }
 
 // Called every frame
@@ -84,6 +114,10 @@ void AJC_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Jump", IE_Pressed,this, &AJC_Character::Jump);
 	PlayerInputComponent->BindAction("StopJump", IE_Released,this, &AJC_Character::StopJumping);
 
+
+	PlayerInputComponent->BindAction("FireWeapon", IE_Pressed, this, &AJC_Character::StartFireWeapon);
+	PlayerInputComponent->BindAction("FireWeapon", IE_Released, this, &AJC_Character::StopFireWeapon);
+
 }
 
 void AJC_Character::AddKey(FName NewKey)
@@ -96,3 +130,18 @@ bool AJC_Character::HasKey(FName KeyTag)
 	return DoorKeys.Contains(KeyTag);
 }
 
+void AJC_Character::StartFireWeapon()
+{
+	if(IsValid(CurrentWeapon))
+	{
+		CurrentWeapon->StartFire();
+	}
+}
+
+void AJC_Character::StopFireWeapon()
+{
+	if (IsValid(CurrentWeapon))
+	{
+		CurrentWeapon->StopFire();
+	}
+}

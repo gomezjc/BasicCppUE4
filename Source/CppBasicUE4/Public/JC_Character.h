@@ -15,6 +15,8 @@ public:
 	// Sets default values for this character's properties
 	AJC_Character();
 
+	virtual FVector GetPawnViewLocation() const override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -49,6 +51,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USpringArmComponent* SprintArmComponent;
 
+	void StartFireWeapon();
+	
+	void StopFireWeapon();
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Weapon")
+	TSubclassOf<class AJC_Weapon> InitialWeaponClass;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
+	class AJC_Weapon* CurrentWeapon;
+
+	void CreateInitialWeapon();
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
