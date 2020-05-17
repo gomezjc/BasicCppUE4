@@ -36,10 +36,25 @@ protected:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category="Aiming")
 	bool bUseFirstPersonView;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Melee")
+	float MeleeDamage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Melee")
+	bool bCanMakeCombo;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Melee")
+	bool bIsComboEnabled;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Melee",meta=(EditCondition= bCanMakeCombo,ClampMin=1.0,UIMin=1.0))
+	float MaxNumComboMultiplier;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Melee", meta = (EditCondition = bCanMakeCombo, ClampMin = 1.0, UIMin = 1.0))
+	float CurrentComboMultiplier;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Key")
 	TArray<FName> DoorKeys;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
 	FName FpsCameraSocketName;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -51,9 +66,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USpringArmComponent* SprintArmComponent;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Melee")
+	bool bIsDoingMelee;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Melee")
+	bool bCanUseWeapon;
+
 	void StartFireWeapon();
 	
 	void StopFireWeapon();
+
+	void StartMelee();
+
+	void StopMelee();
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Weapon")
 	TSubclassOf<class AJC_Weapon> InitialWeaponClass;
@@ -63,15 +88,43 @@ protected:
 
 	void CreateInitialWeapon();
 	
+	void InitializeReferences();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	class UAnimMontage* MeleeMontage;
+
+	class UAnimInstance* AnimInstance;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UCapsuleComponent* MeleeDetectorComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Melee")
+	FName MeleeSocketName;
+
+	UFUNCTION()
+	void MakeMeleeDamage(class UPrimitiveComponent* OverlappedComponent, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		void CheckPlayerEnter(class UPrimitiveComponent* OverlappedComponent, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 
+	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void AddKey(FName NewKey);
 
 	bool HasKey(FName KeyTag);
+
+	void SetMeleeDetectorCollision(ECollisionEnabled::Type NewCollisionState);
+
+	void SetActionState(bool NewState);
+
+	UFUNCTION(BlueprintCallable)
+	void SetComboEnabled(bool NewState);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetCombo();
 };

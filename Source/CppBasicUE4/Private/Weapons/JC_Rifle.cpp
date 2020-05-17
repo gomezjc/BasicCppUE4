@@ -4,6 +4,7 @@
 #include "JC_Rifle.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "CppBasicUE4.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
@@ -37,7 +38,7 @@ void AJC_Rifle::StartFire()
 
 		FVector TraceEndPoint = TraceEnd;
 		
-		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, ECC_Visibility, QueryParams);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams);
 
 		if(bHit)
 		{
