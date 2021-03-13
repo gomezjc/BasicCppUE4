@@ -13,6 +13,8 @@
 #include "Components/CapsuleComponent.h"
 #include "CppBasicUE4.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/JC_HealthComponent.h"
+#include "Core/JC_GameMode.h"
 
 // Sets default values
 AJC_Character::AJC_Character()
@@ -44,6 +46,8 @@ AJC_Character::AJC_Character()
 	MeleeDetectorComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MeleeDetectorComponent->SetCollisionResponseToChannel(COLLISION_ENEMY, ECR_Overlap);
 	MeleeDetectorComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HealthComponent3 = CreateDefaultSubobject<UJC_HealthComponent>(TEXT("HealthComponent"));
 	
 }
 
@@ -68,6 +72,7 @@ void AJC_Character::BeginPlay()
 	CreateInitialWeapon();
 	InitializeReferences();
 	MeleeDetectorComponent->OnComponentBeginOverlap.AddDynamic(this, &AJC_Character::MakeMeleeDamage);
+	HealthComponent3->OnHealthChangeDelegate.AddDynamic(this, &AJC_Character::OnHealthChange);
 }
 
 
@@ -91,6 +96,7 @@ void AJC_Character::InitializeReferences()
 	{
 		AnimInstance = GetMesh()->GetAnimInstance();
 	}
+	GameModeRef = Cast<AJC_GameMode>(GetWorld()->GetAuthGameMode());
 }
 
 void AJC_Character::MakeMeleeDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -99,6 +105,17 @@ void AJC_Character::MakeMeleeDamage(UPrimitiveComponent* OverlappedComponent, AA
 	if(IsValid(OtherActor))
 	{
 		UGameplayStatics::ApplyPointDamage(OtherActor, MeleeDamage * CurrentComboMultiplier, SweepResult.Location, SweepResult, GetInstigatorController(), this, nullptr);
+	}
+}
+
+void AJC_Character::OnHealthChange(UJC_HealthComponent* HealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if(HealthComponent->IsDead())
+	{
+		if (IsValid(GameModeRef))
+		{
+			GameModeRef->GameOver(this);
+		}
 	}
 }
 
