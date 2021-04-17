@@ -26,12 +26,6 @@ protected:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable,Category="Weapon")
-	void BP_StartFire();
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Weapon")
-	void BP_StopFire();
 	
 public:	
 	// Called every frame
@@ -40,6 +34,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterOwner(class ACharacter* NewOwner);
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Weapon")
+	void BP_StartFire();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Weapon")
+	void BP_StopFire();
+	
 	UFUNCTION(BlueprintCallable)
 	virtual void StartFire() { BP_StartFire(); };
 

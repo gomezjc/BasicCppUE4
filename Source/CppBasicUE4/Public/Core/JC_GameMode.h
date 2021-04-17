@@ -12,7 +12,25 @@ UCLASS()
 class CPPBASICUE4_API AJC_GameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spectating Camera")
+	float SpectatingBlendTime;
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Spectating Camera")
+	class AJC_SpectatingCamera* VictoryCamera;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Spectating Camera")
+	class AJC_SpectatingCamera* GameOverCamera;
+
+protected:
+	
+	virtual void BeginPlay() override;
+	
+	void SetupSpectatingCameras();
+
+	void MoveCameraToSpectatingPoint(class AJC_Character* Character, class AJC_SpectatingCamera* SpectatingCamera);
 
 public:
 

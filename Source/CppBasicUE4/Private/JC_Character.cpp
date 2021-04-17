@@ -15,6 +15,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/JC_HealthComponent.h"
 #include "Core/JC_GameMode.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AJC_Character::AJC_Character()
@@ -48,7 +49,15 @@ AJC_Character::AJC_Character()
 	MeleeDetectorComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	HealthComponent3 = CreateDefaultSubobject<UJC_HealthComponent>(TEXT("HealthComponent"));
-	
+	NormalWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	UltimateShootFrequency = 0.25f;
+	UltimateWalkSpeed = 1000.0f;
+	UltimatePlayRate = 2.0f;
+	PlayRate = 1.0f;
+	MaxUltimateXp = 100.0f;
+	MaxUltimateDuration = 10.0f;
+	bUltimateWithTick = true;
+	UltimateFrequency = 0.5f;
 }
 
 FVector AJC_Character::GetPawnViewLocation() const
@@ -123,7 +132,10 @@ void AJC_Character::OnHealthChange(UJC_HealthComponent* HealthComponent, AActor*
 void AJC_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if(bIsUsingUltimate && bUltimateWithTick)
+	{
+		UpdateUltimateDuration(DeltaTime);
+	}
 }
 
 void AJC_Character::MoveForward(float value)
@@ -170,9 +182,10 @@ void AJC_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("FireWeapon", IE_Pressed, this, &AJC_Character::StartFireWeapon);
 	PlayerInputComponent->BindAction("FireWeapon", IE_Released, this, &AJC_Character::StopFireWeapon);
 
-
 	PlayerInputComponent->BindAction("Melee", IE_Pressed, this, &AJC_Character::StartMelee);
 	PlayerInputComponent->BindAction("Melee", IE_Released, this, &AJC_Character::StopMelee);
+
+	PlayerInputComponent->BindAction("Ultimate", IE_Pressed, this, &AJC_Character::StartUltimate);
 
 }
 
@@ -198,6 +211,11 @@ void AJC_Character::StartFireWeapon()
 	if(IsValid(CurrentWeapon))
 	{
 		CurrentWeapon->StartFire();
+
+		if(bIsUsingUltimate)
+		{
+			GetWorld()->GetTimerManager().SetTimer(TimeHandle_AutomaticShoot, CurrentWeapon, &AJC_Weapon::StartFire, UltimateShootFrequency, true);
+		}
 	}
 }
 
@@ -207,6 +225,11 @@ void AJC_Character::StopFireWeapon()
 	if (IsValid(CurrentWeapon))
 	{
 		CurrentWeapon->StopFire();
+
+		if (bIsUsingUltimate)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(TimeHandle_AutomaticShoot);
+		}
 	}
 }
 
@@ -237,7 +260,7 @@ void AJC_Character::StartMelee()
 	
 	if(IsValid(AnimInstance) && IsValid(MeleeMontage))
 	{
-		AnimInstance->Montage_Play(MeleeMontage);
+		AnimInstance->Montage_Play(MeleeMontage, PlayRate);
 	}
 	SetActionState(true);
 }
@@ -263,3 +286,76 @@ void AJC_Character::ResetCombo()
 	SetComboEnabled(false);
 	CurrentComboMultiplier = 1.0f;
 }
+
+void AJC_Character::GainUltimateXp(float XpGained)
+{
+	if(bCanUseUltimate || bIsUsingUltimate)
+	{
+		return;
+	}
+
+	CurrentUltimateXp = FMath::Clamp(CurrentUltimateXp + XpGained, 0.0f, MaxUltimateXp);
+
+	if(CurrentUltimateXp >= MaxUltimateXp)
+	{
+		bCanUseUltimate = true;
+	}
+
+	BP_GainUltimateXp(XpGained); 
+}
+
+void AJC_Character::UpdateUltimateDuration(float Value)
+{
+	CurrentUltimateDuration = FMath::Clamp(CurrentUltimateDuration - Value, 0.0f, MaxUltimateDuration);
+	BP_UpdateUltimateDuration(Value);
+	if(CurrentUltimateDuration == 0.0f)
+	{
+		bIsUsingUltimate = false;
+		PlayRate = 1.0f;
+		GetCharacterMovement()->MaxWalkSpeed = NormalWalkSpeed;
+		GetWorld()->GetTimerManager().ClearTimer(TimeHandle_AutomaticShoot);
+		if(!bUltimateWithTick)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(TimeHandle_Ultimate);
+		}
+		
+		BP_StopUltimate();
+	}
+}
+
+void AJC_Character::UpdateUltimateDurationTimer()
+{
+	UpdateUltimateDuration(UltimateFrequency);
+}
+
+void AJC_Character::BeginUltimateBehaviour()
+{
+	bIsUsingUltimate = true;
+	PlayRate = UltimatePlayRate;
+	GetCharacterMovement()->MaxWalkSpeed = UltimateWalkSpeed;
+
+	if (!bUltimateWithTick)
+	{
+		GetWorld()->GetTimerManager().SetTimer(TimeHandle_Ultimate, this, &AJC_Character::UpdateUltimateDurationTimer, UltimateFrequency, true);
+	}
+}
+
+void AJC_Character::StartUltimate()
+{
+	if(bCanUseUltimate && !bIsUsingUltimate)
+	{
+		CurrentUltimateDuration = MaxUltimateDuration;
+		bCanUseUltimate = false;
+		if (IsValid(AnimInstance) && IsValid(UltimateMontage))
+		{
+			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+			const float StartUltimateMontageDuration = AnimInstance->Montage_Play(UltimateMontage);
+			GetWorld()->GetTimerManager().SetTimer(TimeHandle_BeginUltimateBehaviour, this, &AJC_Character::BeginUltimateBehaviour, StartUltimateMontageDuration, false);
+		}else
+		{
+			BeginUltimateBehaviour();
+		}
+		BP_StartUltimate();
+	}
+}
+

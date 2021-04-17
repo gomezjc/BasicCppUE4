@@ -11,11 +11,13 @@ AJC_DoorKey::AJC_DoorKey()
 	KeyMeshComponent->SetupAttachment(RootComponent);
 	KeyMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	KeyTag = "KeyA";
+	XpValue = 40.0f;
 }
 
 void AJC_DoorKey::PickUp(AJC_Character* PickupPlayer)
 {
 	Super::PickUp(PickupPlayer);
 	PickupPlayer->AddKey(KeyTag);
+	PickupPlayer->GainUltimateXp(XpValue);
 	Destroy();
 }
